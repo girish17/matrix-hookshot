@@ -21,3 +21,6 @@ book
 # Coverage
 coverage
 .nyc_output
+
+# Log files
+nohup.out
