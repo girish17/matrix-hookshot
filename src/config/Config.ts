@@ -103,6 +103,56 @@ export class BridgeConfigGitHub {
     }
 }
 
+export interface BridgeConfigOpenProjectOAuth {
+    // eslint-disable-next-line camelcase
+    client_id: string;
+    // eslint-disable-next-line camelcase
+    client_secret: string;
+    // eslint-disable-next-line camelcase
+    redirect_uri: string;
+}
+
+export interface BridgeConfigOpenProjectYAML {
+    url?: string;
+    oauth?: BridgeConfigOpenProjectOAuth;
+}
+
+export class BridgeConfigOpenProject implements BridgeConfigOpenProjectYAML {
+    static CLOUD_INSTANCE_NAME = "community.openproject.org";
+    // To hide the undefined for now
+    @hideKey()
+    @configKey("URL for the instance if using on prem. Ignore if targeting cloud (community.openproject.org)", true)
+    readonly url?: string;
+    @configKey("OAuth settings for connecting users to JIRA. See documentation for more information", true)
+    readonly oauth?: BridgeConfigOpenProjectOAuth;
+
+    @hideKey()
+    readonly instanceUrl?: URL;
+
+    @hideKey()
+    readonly instanceName: string;
+
+    constructor(yaml: BridgeConfigOpenProjectYAML) {
+        this.url = yaml.url;
+        this.instanceUrl = yaml.url !== undefined ? new URL(yaml.url) : undefined;
+        this.instanceName = this.instanceUrl?.host || BridgeConfigOpenProject.CLOUD_INSTANCE_NAME;
+        if (!yaml.oauth) {
+            return;
+        }
+        let oauth: BridgeConfigOpenProjectOAuth;
+
+        assert.ok(yaml.oauth.redirect_uri);
+        // Validate oauth settings
+        if (this.url) {
+            oauth = yaml.oauth as BridgeConfigOpenProjectOAuth;
+            assert.ok(oauth.client_id);
+            assert.ok(oauth.client_secret);
+            this.oauth = oauth;
+        }
+    }
+}
+
+
 export interface BridgeConfigJiraCloudOAuth {
     // eslint-disable-next-line camelcase
     client_id: string;
@@ -280,10 +330,10 @@ export interface BridgeConfigFigma {
     publicUrl: string;
     overrideUserId?: string;
     instances: {[name: string]: {
-        teamId: string;
-        accessToken: string;
-        passcode: string;
-    }};
+            teamId: string;
+            accessToken: string;
+            passcode: string;
+        }};
 }
 
 export interface BridgeGenericWebhooksConfigYAML {
@@ -325,6 +375,7 @@ export class BridgeConfigGenericWebhooks {
         return {
             userIdPrefix: this.userIdPrefix,
             allowJsTransformationFunctions: this.allowJsTransformationFunctions,
+            waitForComplete: this.waitForComplete,
         }
     }
 
@@ -469,6 +520,7 @@ export interface BridgeConfigRoot {
     permissions?: BridgeConfigActorPermission[];
     provisioning?: BridgeConfigProvisioning;
     jira?: BridgeConfigJiraYAML;
+    openproject?: BridgeConfigOpenProjectYAML;
     logging: BridgeConfigLogging;
     passFile: string;
     queue: BridgeConfigQueue;
@@ -504,6 +556,8 @@ export class BridgeConfig {
     public readonly gitlab?: BridgeConfigGitLab;
     @configKey("Configure this to enable Jira support. Only specify `url` if you are using a On Premise install (i.e. not atlassian.com)", true)
     public readonly jira?: BridgeConfigJira;
+    @configKey("Configure this to enable OpenProject support.", true)
+    public readonly openproject?: BridgeConfigOpenProject;
     @configKey(`Support for generic webhook events.
 'allowJsTransformationFunctions' will allow users to write short transformation snippets in code, and thus is unsafe in untrusted environments
 `, true)
@@ -552,6 +606,7 @@ export class BridgeConfig {
         this.gitlab = configData.gitlab && new BridgeConfigGitLab(configData.gitlab);
         this.figma = configData.figma;
         this.jira = configData.jira && new BridgeConfigJira(configData.jira);
+        this.openproject = configData.openproject && new BridgeConfigOpenProject(configData.openproject);
         this.generic = configData.generic && new BridgeConfigGenericWebhooks(configData.generic);
         this.feeds = configData.feeds && new BridgeConfigFeeds(configData.feeds);
         this.provisioning = configData.provisioning;
@@ -741,6 +796,9 @@ remove "useLegacySledStore" from your configuration file, and restart Hookshot.
         if (this.jira) {
             services.push("jira");
         }
+        if (this.openproject) {
+            services.push("openproject");
+        }
         return services;
     }
 
@@ -760,6 +818,9 @@ remove "useLegacySledStore" from your configuration file, and restart Hookshot.
                 config = this.gitlab?.publicConfig;
                 break;
             case "jira":
+                config = {};
+                break;
+            case "openproject":
                 config = {};
                 break;
             default:

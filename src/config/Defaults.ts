@@ -101,6 +101,13 @@ export const DefaultConfigRoot: BridgeConfigRoot = {
             redirect_uri: `${hookshotWebhooksUrl}/bridge_oauth/`,
         },
     },
+    openproject: {
+        oauth: {
+            client_id: "foo",
+            client_secret: "bar",
+            redirect_uri: `${hookshotWebhooksUrl}/bridge_oauth/`,
+        },
+    },
     generic: {
         allowJsTransformationFunctions: false,
         enabled: false,
@@ -183,7 +190,7 @@ function renderSection(doc: YAML.Document, obj: Record<string, unknown>, parentN
         if (comment) {
             newNode.commentBefore = `${optional ? ' (Optional)' : ''} ${comment}`;
         }
-        
+
         if (optional && !parentIsOptional) {
             const tempDoc = new YAML.Document();
             tempDoc.contents = tempDoc.createNode({});
