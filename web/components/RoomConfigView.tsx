@@ -1,6 +1,5 @@
-import { WidgetApi } from "matrix-widget-api";
 import { useState } from "preact/hooks"
-import { BridgeAPI, BridgeConfig, EmbedType } from "../BridgeAPI";
+import { BridgeConfig, EmbedType } from "../BridgeAPI";
 import style from "./RoomConfigView.module.scss";
 import { ConnectionCard } from "./ConnectionCard";
 import { FeedsConfig } from "./roomConfig/FeedsConfig";
@@ -17,8 +16,6 @@ import WebhookIcon from "../icons/webhook.png";
 
 
 interface IProps {
-    widgetApi: WidgetApi,
-    bridgeApi: BridgeAPI,
     supportedServices: {[service: string]: boolean},
     serviceScope?: string,
     embedType: EmbedType,
@@ -37,6 +34,7 @@ interface IConnectionProps {
     displayName: string,
     description: string,
     icon: string,
+    darkIcon?: true,
     component: BridgeConfig,
 }
 
@@ -51,6 +49,7 @@ const connections: Record<ConnectionType, IConnectionProps> = {
         displayName: 'Github',
         description: "Connect the room to a GitHub project",
         icon: GitHubIcon,
+        darkIcon: true,
         component: GithubRepoConfig,
     },
     [ConnectionType.Gitlab]: {
@@ -69,6 +68,7 @@ const connections: Record<ConnectionType, IConnectionProps> = {
         displayName: 'Generic Webhook',
         description: "Create a webhook which can be used to connect any service to Matrix",
         icon: WebhookIcon,
+        darkIcon: true,
         component: GenericWebhookConfig,
     },
 };
@@ -83,7 +83,6 @@ export default function RoomConfigView(props: IProps) {
         const ConfigComponent = connections[activeConnectionType].component;
         content = <ConfigComponent
             roomId={props.roomId}
-            api={props.bridgeApi}
             showHeader={props.embedType !== EmbedType.IntegrationManager}
         />;
     } else {
@@ -97,6 +96,7 @@ export default function RoomConfigView(props: IProps) {
                         description={connection.description}
                         key={connectionType}
                         imageSrc={connection.icon}
+                        darkImage={connection.darkIcon}
                         onClick={() => setActiveConnectionType(connectionType)}
                     />
                 })}
@@ -105,6 +105,7 @@ export default function RoomConfigView(props: IProps) {
     }
 
     return <div className={style.root}>
+
         {!serviceScope && activeConnectionType &&
             <header>
                 <span className={style.backButton} onClick={() => setActiveConnectionType(null)}>

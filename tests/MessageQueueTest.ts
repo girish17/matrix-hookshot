@@ -1,13 +1,11 @@
 import { expect } from "chai";
 import { createMessageQueue } from "../src/MessageQueue/MessageQueue";
 
-const mq = createMessageQueue({
-    monolithic: true,
-});
+const mq = createMessageQueue();
 
 describe("MessageQueueTest", () => {
     describe("LocalMq", () => {
-        it("should be able to push an event, and listen for it", async (done) => {
+        it("should be able to push an event, and listen for it", (done) => {
             mq.subscribe("fakeevent");
             mq.on("fakeevent", (msg) => {
                 expect(msg).to.deep.equal({
@@ -18,7 +16,7 @@ describe("MessageQueueTest", () => {
                 });
                 done();
             });
-            await mq.push<number>({
+            mq.push<number>({
                 sender: "foo",
                 eventName: "fakeevent",
                 messageId: "foooo",

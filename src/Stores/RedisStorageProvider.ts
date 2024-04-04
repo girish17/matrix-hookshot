@@ -6,6 +6,7 @@ import { IBridgeStorageProvider, MAX_FEED_ITEMS } from "./StorageProvider";
 import { IFilterInfo, IStorageProvider } from "matrix-bot-sdk";
 import { ProvisionSession } from "matrix-appservice-bridge";
 import { SerializedGitlabDiscussionThreads } from "../Gitlab/Types";
+import { BridgeConfigCache } from "../config/sections";
 
 const BOT_SYNC_TOKEN_KEY = "bot.sync_token.";
 const BOT_FILTER_KEY = "bot.filter.";
@@ -29,11 +30,10 @@ const WIDGET_USER_TOKENS = "widgets.user-tokens.";
 
 const FEED_GUIDS = "feeds.guids.";
 
-
-
 const log = new Logger("RedisASProvider");
 
 export class RedisStorageContextualProvider implements IStorageProvider {
+
     constructor(protected readonly redis: Redis, protected readonly contextSuffix = '') { }
 
     public setSyncToken(token: string|null){
@@ -69,8 +69,8 @@ export class RedisStorageContextualProvider implements IStorageProvider {
 
 
 export class RedisStorageProvider extends RedisStorageContextualProvider implements IBridgeStorageProvider {
-    constructor(host: string, port: number, contextSuffix = '') {
-        super(new redis(port, host), contextSuffix);
+    constructor(cacheConfig: BridgeConfigCache, contextSuffix = '') {
+        super(new redis(cacheConfig.redisUri), contextSuffix);
         this.redis.expire(COMPLETED_TRANSACTIONS_KEY, COMPLETED_TRANSACTIONS_EXPIRE_AFTER).catch((ex) => {
             log.warn("Failed to set expiry time on as.completed_transactions", ex);
         });
@@ -216,9 +216,9 @@ export class RedisStorageProvider extends RedisStorageContextualProvider impleme
         await this.redis.set(key, JSON.stringify(value));
     }
 
-    public async storeFeedGuids(url: string, ...guid: string[]): Promise<void> {
+    public async storeFeedGuids(url: string, ...guids: string[]): Promise<void> {
         const feedKey = `${FEED_GUIDS}${url}`;
-        await this.redis.lpush(feedKey, ...guid);
+        await this.redis.lpush(feedKey, ...guids);
         await this.redis.ltrim(feedKey, 0, MAX_FEED_ITEMS);
     }
 
@@ -226,7 +226,18 @@ export class RedisStorageProvider extends RedisStorageContextualProvider impleme
         return (await this.redis.exists(`${FEED_GUIDS}${url}`)) === 1;
     }
 
-    public async hasSeenFeedGuid(url: string, guid: string): Promise<boolean> {
-        return (await this.redis.lpos(`${FEED_GUIDS}${url}`, guid)) != null;
+    public async hasSeenFeedGuids(url: string, ...guids: string[]): Promise<string[]> {
+        let multi = this.redis.multi();
+        const feedKey = `${FEED_GUIDS}${url}`;
+
+        for (const guid of guids) {
+            multi = multi.lpos(feedKey, guid);
+        }
+        const res = await multi.exec();
+        if (res === null) {
+            // Just assume we've seen none.
+            return [];
+        }
+        return guids.filter((_guid, index) => res[index][1] !== null);
     }
 }

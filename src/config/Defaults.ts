@@ -16,9 +16,10 @@ export const DefaultConfigRoot: BridgeConfigRoot = {
         bindAddress: "127.0.0.1",
     },
     queue: {
-        monolithic: true,
-        port: 6379,
-        host: "localhost",
+        redisUri: "redis://localhost:6379",
+    },
+    cache: {
+        redisUri: "redis://localhost:6379",
     },
     logging: {
         level: "info",
@@ -66,7 +67,7 @@ export const DefaultConfigRoot: BridgeConfigRoot = {
         oauth: {
             client_id: "foo",
             client_secret: "bar",
-            redirect_uri: `${hookshotWebhooksUrl}/bridge_oauth/`,
+            redirect_uri: `${hookshotWebhooksUrl}/oauth/`,
         },
         webhook: {
             secret: "secrettoken",
@@ -98,7 +99,7 @@ export const DefaultConfigRoot: BridgeConfigRoot = {
         oauth: {
             client_id: "foo",
             client_secret: "bar",
-            redirect_uri: `${hookshotWebhooksUrl}/bridge_oauth/`,
+            redirect_uri: `${hookshotWebhooksUrl}/oauth/`,
         },
     },
     generic: {

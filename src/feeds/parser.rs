@@ -70,7 +70,8 @@ fn parse_channel_to_js_result(channel: &Channel) -> JsRssChannel {
                     .map(|f| f.value)
                     .or(item.link.clone())
                     .or(item.title.clone())
-                    .and_then(|f| hash_id(f).ok()),
+                    .and_then(|f| hash_id(f).ok())
+                    .map(|f| format!("md5:{}", f)),
             })
             .collect(),
     }
@@ -117,7 +118,7 @@ fn parse_feed_to_js_result(feed: &Feed) -> JsRssChannel {
                     .map(|date| date.to_rfc2822()),
                 summary: item.summary().map(|v| v.value.clone()),
                 author: authors_to_string(item.authors()),
-                hash_id: hash_id(item.id.clone()).ok(),
+                hash_id: hash_id(item.id.clone()).ok().map(|f| format!("md5:{}", f)),
             })
             .collect(),
     }

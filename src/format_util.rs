@@ -1,14 +1,12 @@
 use crate::github::types::*;
 use crate::jira;
 use crate::jira::types::{JiraIssue, JiraIssueLight, JiraIssueMessageBody, JiraIssueSimpleItem};
-use contrast;
+use contrast::contrast;
 use md5::{Digest, Md5};
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use rgb::RGB;
-use ruma::events::room::message::sanitize::{
-    sanitize_html, HtmlSanitizerMode, RemoveReplyFallback,
-};
+use ruma::html::{sanitize_html, HtmlSanitizerMode, RemoveReplyFallback};
 use std::fmt::Write;
 
 #[derive(Serialize, Debug, Deserialize)]
@@ -89,12 +87,11 @@ pub fn format_labels(array: Vec<IssueLabelDetail>) -> Result<MatrixMessageFormat
             write!(html, " data-mx-bg-color=\"#{}\"", color).unwrap();
             // Determine the constrast
             let color_rgb = parse_rgb(color)?;
-            let contrast_color =
-                if contrast::contrast::<u8, f32>(color_rgb, RGB::new(0, 0, 0)) > 4.5 {
-                    "#000000"
-                } else {
-                    "#FFFFFF"
-                };
+            let contrast_color = if contrast::<u8, f32>(color_rgb, RGB::new(0, 0, 0)) > 4.5 {
+                "#000000"
+            } else {
+                "#FFFFFF"
+            };
             write!(html, " data-mx-color=\"{}\"", contrast_color).unwrap();
         }
         if let Some(description) = label.description {
@@ -171,8 +168,8 @@ pub fn get_partial_body_for_jira_issue(jira_issue: JiraIssue) -> Result<JiraIssu
 #[napi]
 pub fn hash_id(id: String) -> Result<String> {
     let mut hasher = Md5::new();
-    hasher.input(id);
-    Ok(hex::encode(hasher.result()))
+    hasher.update(id);
+    Ok(hex::encode(hasher.finalize()))
 }
 
 #[napi(js_name = "sanitizeHtml")]

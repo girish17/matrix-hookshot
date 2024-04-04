@@ -9,21 +9,21 @@ This feature is <b>experimental</b> and should only be used when you are reachin
 
 ## Running in multi-process mode
 
-You must first have a working redis instance somewhere which can talk between processes. For example, in Docker you can run:
+You must first have a working Redis instance somewhere which can talk between processes. For example, in Docker you can run:
 
-`docker run --name github-bridge-redis -p 6379:6379 -d redis`.
+`docker run --name redis-host -p 6379:6379 -d redis`.
 
-
-The processes should all share the same config, which should contain the correct config enable redis:
+The processes should all share the same config, which should contain the correct config to enable Redis:
 
 ```yaml
 queue:
-  monolithic: false
-  port: 6379
-  host: github-bridge-redis
+  redisUri: "redis://redis-host:6379"
+cache:
+  redisUri: "redis://redis-host:6379"
 ```
 
-Note that if [encryption](./encryption.md) is enabled, `queue.monolithic` must be set to `true`, as worker mode is not yet supported with encryption.
+Note that if [encryption](./encryption.md) is enabled, you MUST enable the `cache` config but NOT the `queue` config. Workers require persistent
+storage in Redis, but cannot make use of worker-mode queues.
 
 Once that is done, you can simply start the processes by name using yarn:
 ```

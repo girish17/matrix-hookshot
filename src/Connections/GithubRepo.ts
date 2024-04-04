@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { Appservice, Intent, IRichReplyMetadata, StateEvent } from "matrix-bot-sdk";
 import { BotCommands, botCommand, compileBotCommands, HelpFunction } from "../BotCommands";
 import { CommentProcessor } from "../CommentProcessor";
@@ -13,14 +12,14 @@ import { IssuesOpenedEvent, IssuesReopenedEvent, IssuesEditedEvent, PullRequestO
 import { MatrixMessageContent, MatrixEvent, MatrixReactionContent } from "../MatrixEvent";
 import { MessageSenderClient } from "../MatrixSender";
 import { CommandError, NotLoggedInError } from "../errors";
-import { NAMELESS_ORG_PLACEHOLDER, ReposGetResponseData } from "../github/Types";
+import { ReposGetResponseData } from "../github/Types";
 import { UserTokenStore } from "../UserTokenStore";
 import axios, { AxiosError } from "axios";
-import emoji from "node-emoji";
+import { emojify } from "node-emoji";
 import { Logger } from "matrix-appservice-bridge";
 import markdown from "markdown-it";
 import { CommandConnection } from "./CommandConnection";
-import { GithubInstance } from "../github/GithubInstance";
+import { getNameForGitHubAccount, GithubInstance } from "../github/GithubInstance";
 import { GitHubIssueConnection } from "./GithubIssue";
 import { BridgeConfigGitHub } from "../config/Config";
 import { ApiError, ErrCode, ValidatorApiError } from "../api";
@@ -316,13 +315,14 @@ const EMOJI_TO_REVIEW_STATE = {
 };
 
 const WORKFLOW_CONCLUSION_TO_NOTICE: Record<WorkflowRunCompletedEvent["workflow_run"]["conclusion"], string> = {
-    success: "completed sucessfully 🎉",
+    success: "completed successfully 🎉",
     failure: "failed 😟",
     neutral: "completed neutrally 😐",
     cancelled: "was cancelled 🙅",
     timed_out: "timed out ⏰",
     action_required: "requires further action 🖱️",
-    stale: "completed, but is stale 🍞"
+    stale: "completed, but is stale 🍞",
+    skipped: "skipped ⏭️"
 }
 
 const TRUNCATE_COMMENT_SIZE = 256;
@@ -669,7 +669,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
             if (this.showIssueRoomLink) {
                 message += ` [Issue Room](https://matrix.to/#/${this.as.getAlias(GitHubIssueConnection.generateAliasLocalpart(this.org, this.repo, issue.number))})`;
             }
-            const content = emoji.emojify(message);
+            const content = emojify(message);
             await this.intent.sendEvent(this.roomId, {
                 msgtype: "m.notice",
                 body: content ,
@@ -698,7 +698,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
                 )
             );
             // Typescript is dumb.
-            // @ts-ignore - property is used
+            // @ts-expect-error - property is used
             const reviewEvent = reviewKey && EMOJI_TO_REVIEW_STATE[reviewKey];
             if (body && repoInfo && pullRequestId  && reviewEvent) {
                 log.info(`Handling reply to PR ${pullRequestId}`);
@@ -886,8 +886,8 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
         const orgRepoName = event.repository.full_name;
 
         const icon = '📥';
-        let message = emoji.emojify(`${icon} **${event.issue.user.login}** created new issue [${orgRepoName}#${event.issue.number}](${event.issue.html_url}): "${event.issue.title}"`);
-        message += (event.issue.assignee ? ` assigned to ${event.issue.assignee.login}` : '');
+        let message = emojify(`${icon} **${event.issue.user.login}** created new issue [${orgRepoName}#${event.issue.number}](${event.issue.html_url}): "${event.issue.title}"`);
+        message += (event.issue.assignees.length ? ` assigned to ${event.issue.assignees.map(a => a.login).join(', ')}` : '');
         if (this.showIssueRoomLink) {
             const appInstance = await this.githubInstance.getSafeOctokitForRepo(this.org, this.repo);
             if (appInstance) {
@@ -896,7 +896,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
                 log.warn(`Cannot show issue room link, no app install for ${orgRepoName}`);
             }
         }
-        const content = emoji.emojify(message);
+        const content = emojify(message);
         const labels = FormatUtil.formatLabels(event.issue.labels?.map(l => ({ name: l.name, description: l.description || undefined, color: l.color || undefined })));
         await this.intent.sendEvent(this.roomId, {
             msgtype: "m.notice",
@@ -913,7 +913,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
         }
 
         const icon = '🗣';
-        let message = emoji.emojify(`${icon} **${event.comment.user.login}** [commented](${event.issue.html_url}) on [${event.repository.full_name}#${event.issue.number}](${event.issue.html_url})  `);
+        let message = emojify(`${icon} **${event.comment.user.login}** [commented](${event.issue.html_url}) on [${event.repository.full_name}#${event.issue.number}](${event.issue.html_url})  `);
         message += "\n> " + event.comment.body.substring(0, TRUNCATE_COMMENT_SIZE) + (event.comment.body.length > TRUNCATE_COMMENT_SIZE ? "…" : "");
 
         await this.intent.sendEvent(this.roomId, {
@@ -963,7 +963,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
             }
         }
         const icon = state === 'reopened' ? '🔷' : '⬛';
-        const content = emoji.emojify(`${icon} **${event.sender.login}** ${state} issue [${orgRepoName}#${event.issue.number}](${event.issue.html_url}): "${emoji.emojify(event.issue.title)}"${withComment}`);
+        const content = emojify(`${icon} **${event.sender.login}** ${state} issue [${orgRepoName}#${event.issue.number}](${event.issue.html_url}): "${emojify(event.issue.title)}"${withComment}`);
         await this.intent.sendEvent(this.roomId, {
             msgtype: "m.notice",
             body: content,
@@ -983,7 +983,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
         log.info(`onIssueEdited ${this.roomId} ${this.org}/${this.repo} #${event.issue.number}`);
         const orgRepoName = event.repository.full_name;
         const icon = '✏';
-        const content = emoji.emojify(`${icon} **${event.sender.login}** edited issue [${orgRepoName}#${event.issue.number}](${event.issue.html_url}): "${emoji.emojify(event.issue.title)}"`);
+        const content = emojify(`${icon} **${event.sender.login}** edited issue [${orgRepoName}#${event.issue.number}](${event.issue.html_url}): "${emojify(event.issue.title)}"`);
         await this.intent.sendEvent(this.roomId, {
             msgtype: "m.notice",
             body: content,
@@ -1015,7 +1015,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
             const orgRepoName = event.repository.full_name;
             const {plain, html} = FormatUtil.formatLabels(event.issue.labels?.map(l => ({ name: l.name, description: l.description || undefined, color: l.color || undefined })));
             const icon = '🗃';
-            const content = emoji.emojify(`${icon} **${event.sender.login}** labeled issue [${orgRepoName}#${event.issue.number}](${event.issue.html_url}): "${emoji.emojify(event.issue.title)}"`);
+            const content = emojify(`${icon} **${event.sender.login}** labeled issue [${orgRepoName}#${event.issue.number}](${event.issue.html_url}): "${emojify(event.issue.title)}"`);
             this.intent.sendEvent(this.roomId, {
                 msgtype: "m.notice",
                 body: content + (plain.length > 0 ? ` with labels ${plain}`: ""),
@@ -1073,7 +1073,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
             }
         }
         const icon = verb === 'opened' ? '🔵' : '⚪';
-        const content = emoji.emojify(`${icon} **${event.sender.login}** ${verb} a new PR [${orgRepoName}#${event.pull_request.number}](${event.pull_request.html_url}): "${event.pull_request.title}"`);
+        const content = emojify(`${icon} **${event.sender.login}** ${verb} a new PR [${orgRepoName}#${event.pull_request.number}](${event.pull_request.html_url}): "${event.pull_request.title}"`);
         const labels = FormatUtil.formatLabels(event.pull_request.labels?.map(l => ({ name: l.name, description: l.description || undefined, color: l.color || undefined })));
         await this.intent.sendEvent(this.roomId, {
             msgtype: "m.notice",
@@ -1098,7 +1098,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
         }
         const orgRepoName = event.repository.full_name;
         const icon = '🔬';
-        const content = emoji.emojify(`${icon} **${event.sender.login}** has marked [${orgRepoName}#${event.pull_request.number}](${event.pull_request.html_url}) as ready to review "${event.pull_request.title}"`);
+        const content = emojify(`${icon} **${event.sender.login}** has marked [${orgRepoName}#${event.pull_request.number}](${event.pull_request.html_url}) as ready to review "${event.pull_request.title}"`);
         await this.intent.sendEvent(this.roomId, {
             msgtype: "m.notice",
             body: content,
@@ -1131,7 +1131,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
             // We don't recongnise this state, run away!
             return;
         }
-        const content = emoji.emojify(`${emojiForReview} **${event.sender.login}** ${event.review.state.toLowerCase()} [${orgRepoName}#${event.pull_request.number}](${event.pull_request.html_url}) "${event.pull_request.title}"`);
+        const content = emojify(`${emojiForReview} **${event.sender.login}** ${event.review.state.toLowerCase()} [${orgRepoName}#${event.pull_request.number}](${event.pull_request.html_url}) "${event.pull_request.title}"`);
         await this.intent.sendEvent(this.roomId, {
             msgtype: "m.notice",
             body: content,
@@ -1178,7 +1178,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
         }
 
         const icon = verb === 'merged' ? '✳' : '⚫';
-        const content = emoji.emojify(`${icon} **${event.sender.login}** ${verb} PR [${orgRepoName}#${event.pull_request.number}](${event.pull_request.html_url}): "${event.pull_request.title}"${withComment}`);
+        const content = emojify(`${icon} **${event.sender.login}** ${verb} PR [${orgRepoName}#${event.pull_request.number}](${event.pull_request.html_url}): "${event.pull_request.title}"${withComment}`);
         await this.intent.sendEvent(this.roomId, {
             msgtype: "m.notice",
             body: content,
@@ -1206,7 +1206,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
         }
         const orgRepoName = event.repository.full_name;
         const icon = '📣';
-        let content = emoji.emojify(`${icon} **${event.sender.login}** released [${event.release.name ?? event.release.tag_name}](${event.release.html_url}) for ${orgRepoName}`);
+        let content = emojify(`${icon} **${event.sender.login}** released [${event.release.name ?? event.release.tag_name}](${event.release.html_url}) for ${orgRepoName}`);
         if (event.release.body) {
             content += `\n\n${event.release.body}`
         }
@@ -1233,7 +1233,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
         }
         const icon = '📝';
         const orgRepoName = event.repository.full_name;
-        let content = emoji.emojify(`${icon} **${event.sender.login}** drafted release [${event.release.name ?? event.release.tag_name}](${event.release.html_url}) for ${orgRepoName}`);
+        let content = emojify(`${icon} **${event.sender.login}** drafted release [${event.release.name ?? event.release.tag_name}](${event.release.html_url}) for ${orgRepoName}`);
         if (event.release.body) {
             content += `\n\n${event.release.body}`
         }
@@ -1270,7 +1270,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
         log.info(`onWorkflowCompleted ${this.roomId} ${this.org}/${this.repo} '${workflowRun.id}'`);
         const orgRepoName = event.repository.full_name;
         const icon = '☑';
-        const content = emoji.emojify(`${icon} Workflow **${event.workflow.name}** [${WORKFLOW_CONCLUSION_TO_NOTICE[workflowRun.conclusion]}](${workflowRun.html_url}) for ${orgRepoName} on branch \`${workflowRun.head_branch}\``);
+        const content = emojify(`${icon} Workflow **${event.workflow.name}** [${WORKFLOW_CONCLUSION_TO_NOTICE[workflowRun.conclusion]}](${workflowRun.html_url}) for ${orgRepoName} on branch \`${workflowRun.head_branch}\``);
         await this.intent.sendEvent(this.roomId, {
             msgtype: "m.notice",
             body: content,
@@ -1430,7 +1430,7 @@ export class GitHubRepoConnection extends CommandConnection<GitHubRepoConnection
                 for (const install of installs.data.installations) {
                     if (install.account) {
                         results.push({
-                            name: install.account.login || NAMELESS_ORG_PLACEHOLDER, // org or user name
+                            name: getNameForGitHubAccount(install.account), // org or user name
                         });
                     } else {
                         log.debug(`Skipping install ${install.id}, has no attached account`);
