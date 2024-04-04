@@ -6,7 +6,13 @@ import { publicEncrypt, privateDecrypt } from "crypto";
 import { Logger } from "matrix-appservice-bridge";
 import { isJiraCloudInstance, JiraClient } from "./jira/Client";
 import { JiraStoredToken } from "./jira/Types";
-import { BridgeConfig, BridgeConfigJira, BridgeConfigJiraOnPremOAuth, BridgePermissionLevel } from "./config/Config";
+import {
+    BridgeConfig,
+    BridgeConfigJira,
+    BridgeConfigJiraOnPremOAuth,
+    BridgeConfigOpenProject,
+    BridgePermissionLevel
+} from "./config/Config";
 import { randomUUID } from 'node:crypto';
 import { GitHubOAuthToken } from "./github/Types";
 import { ApiError, ErrCode } from "./api";
@@ -259,6 +265,45 @@ export class UserTokenStore extends TypedEmitter<Emitter> {
         }
         throw Error('Could not determine type of client');
     }
+
+    // public async getOpenProjectForUser(userId: string, instanceUrl?: string): Promise<OpenProjectClient|null> {
+    //     if (!this.config.openproject?.oauth) {
+    //         throw Error('OpenProject not configured');
+    //     }
+    //
+    //     let instance = instanceUrl && new URL(instanceUrl).host;
+    //
+    //     if (!instance || isOpenProjectCloudInstance(instance)) {
+    //         instance = BridgeConfigOpenProject.CLOUD_INSTANCE_NAME;
+    //     }
+    //
+    //     let jsonData = await this.getUserToken("openproject", userId, instance);
+    //     // XXX: Legacy fallback
+    //     if (!jsonData && instance === BridgeConfigOpenProject.CLOUD_INSTANCE_NAME) {
+    //         jsonData = await this.getUserToken("openproject", userId);
+    //     }
+    //     if (!jsonData) {
+    //         return null;
+    //     }
+    //     const storedToken = JSON.parse(jsonData) as OpenProjectStoredToken;
+    //     if (!storedToken.instance) {
+    //         // Legacy stored tokens don't include the cloud instance string.
+    //         storedToken.instance = BridgeConfigOpenProject.CLOUD_INSTANCE_NAME;
+    //     }
+    //     if (storedToken.instance === BridgeConfigOpenProject.CLOUD_INSTANCE_NAME) {
+    //         return new OpenProjectCloudClient(storedToken, (data) => {
+    //             return this.storeOpenProjectToken(userId, data);
+    //         }, this.config.jira, instance);
+    //     } else if (this.config.jira.url) {
+    //         return new OpenProjectClient(
+    //             storedToken,
+    //             (this.openprojectOAuth as JiraOnPremOAuth).privateKey,
+    //             this.config.openproject.oauth as BridgeConfigOpenProject,
+    //             this.config.openproject.url,
+    //         );
+    //     }
+    //     throw Error('Could not determine type of client');
+    // }
 
     public createStateForOAuth(userId: string): string {
         const state = randomUUID();

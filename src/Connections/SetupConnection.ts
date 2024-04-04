@@ -206,6 +206,84 @@ export class SetupConnection extends CommandConnection {
         return this.client.sendHtmlNotice(this.roomId, md.renderInline(`Room no longer bridged to Jira project \`${safeUrl}\`.`));
     }
 
+    private async checkOpenProjectLogin(userId: string, urlStr: string) {
+        // const openProjectClient = await this.provisionOpts.tokenStore.getOpenProjectForUser(userId, urlStr);
+        // if (!openProjectClient) {
+        //     throw new CommandError("User not logged in", "You are not logged into OpenProject. Start a DM with this bot and use the command `openproject login`.");
+        // }
+    }
+
+    @botCommand("op project", { help: "Create a connection for an OpenProject project. (You must be logged in with OpenProject to do this.)", requiredArgs: ["url"], includeUserId: true, category: "openproject"})
+    public async onOpenProjectProject(userId: string, urlStr: string) {
+        if (!this.config.openproject) {
+            throw new CommandError("not-configured", "The bridge is not configured to support OpenProject.");
+        }
+
+        // await this.checkUserPermissions(userId, "openproject", OpenProjectConnection.CanonicalEventType);
+        // await this.checkOpenProjectLogin(userId, urlStr);
+        // const safeUrl = await this.getOpenProjectSafeUrl(userId, urlStr);
+        //
+        // const res = await OpenProjectConnection.provisionConnection(this.roomId, userId, { url: safeUrl }, this.provisionOpts);
+        // this.pushConnections(res.connection);
+        // await this.client.sendNotice(this.roomId, `Room configured to bridge OpenProject project ${res.connection.projectKey}.`);
+    }
+
+    @botCommand("op list project", { help: "Show OpenProject projects currently connected to.", category: "openproject"})
+    public async onOpenProjectListProject() {
+        // const projects: OpenProjectConnectionState[] = await this.client.getRoomState(this.roomId).catch((err: any) => {
+        //     if (err.body.errcode === 'M_NOT_FOUND') {
+        //         return []; // not an error to us
+        //     }
+        //     throw err;
+        // }).then(events =>
+        //     events.filter(
+        //         (ev: any) => (
+        //             ev.type === OpenProjectConnection.CanonicalEventType ||
+        //             ev.type === OpenProjectConnection.LegacyCanonicalEventType
+        //         ) && ev.content.url
+        //     ).map(ev => ev.content)
+        // );
+        //
+        // if (projects.length === 0) {
+        //     return this.client.sendHtmlNotice(this.roomId, md.renderInline('Not connected to any OpenProject projects'));
+        // } else {
+        //     return this.client.sendHtmlNotice(this.roomId, md.render(
+        //         'Currently connected to these OpenProject projects:\n\n' +
+        //         projects.map(project => ` - ${project.url}`).join('\n')
+        //     ));
+        // }
+    }
+
+    @botCommand("op remove project", { help: "Remove a connection for a OpenProject project.", requiredArgs: ["url"], includeUserId: true, category: "openproject"})
+    public async onOpenProjectRemoveProject(userId: string, urlStr: string) {
+        // await this.checkUserPermissions(userId, "openproject", OpenProjectConnection.CanonicalEventType);
+        // await this.checkOpenProjectLogin(userId, urlStr);
+        // const safeUrl = await this.getOpenProjectSafeUrl(userId, urlStr);
+        //
+        // const eventTypes = [
+        //     OpenProjectConnection.CanonicalEventType,
+        //     OpenProjectConnection.LegacyCanonicalEventType,
+        // ];
+        // let event = null;
+        // let eventType = "";
+        // for (eventType of eventTypes) {
+        //     try {
+        //         event = await this.client.getRoomStateEvent(this.roomId, eventType, safeUrl);
+        //         break;
+        //     } catch (err: any) {
+        //         if (err.body.errcode !== 'M_NOT_FOUND') {
+        //             throw err;
+        //         }
+        //     }
+        // }
+        // if (!event || Object.keys(event).length === 0) {
+        //     throw new CommandError("Invalid OpenProject project URL", `Feed "${urlStr}" is not currently bridged to this room`);
+        // }
+        //
+        // await this.client.sendStateEvent(this.roomId, eventType, safeUrl, {});
+        // return this.client.sendHtmlNotice(this.roomId, md.renderInline(`Room no longer bridged to OpenProject project \`${safeUrl}\`.`));
+    }
+
     @botCommand("webhook", { help: "Create an inbound webhook.", requiredArgs: ["name"], includeUserId: true, category: "generic"})
     public async onWebhook(userId: string, name: string) {
         if (!this.config.generic?.enabled) {

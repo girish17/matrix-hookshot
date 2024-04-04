@@ -25,7 +25,7 @@ export abstract class CommandConnection<StateType extends IConnectionState = ICo
         protected readonly serviceName?: string,
     ) {
         super(roomId, stateKey, canonicalStateType);
-    }
+          }
 
     protected get commandPrefix() {
         return (this.state.commandPrefix || this.defaultCommandPrefix) + " ";

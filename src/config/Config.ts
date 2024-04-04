@@ -123,7 +123,7 @@ export class BridgeConfigOpenProject implements BridgeConfigOpenProjectYAML {
     @hideKey()
     @configKey("URL for the instance if using on prem. Ignore if targeting cloud (community.openproject.org)", true)
     readonly url?: string;
-    @configKey("OAuth settings for connecting users to JIRA. See documentation for more information", true)
+    @configKey("OAuth settings for connecting users to OpenProject. See documentation for more information", true)
     readonly oauth?: BridgeConfigOpenProjectOAuth;
 
     @hideKey()
