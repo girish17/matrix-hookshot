@@ -6,6 +6,7 @@ Matrix Hookshot
 
 A Matrix bot for connecting to external services like GitHub, GitLab, JIRA, and more.
 
+GitHub issues demo
 ![githubIssuesDemo](githubIssuesDemo.gif)
 
 - Several services are supported out of the box.
@@ -14,6 +15,7 @@ A Matrix bot for connecting to external services like GitHub, GitLab, JIRA, and 
 - End-to-Bridge encryption allows bots to be used in encrypted Matrix rooms.
 - [Powerful widgets](https://matrix-org.github.io/matrix-hookshot/latest/advanced/widgets.html) let you configure Hookshot from a room or the Element Extensions Store.
 
+OpenProject webhooks demo with Hookshot
 ![OpenProjectGenericWebhook](OpenProjectGenericWebhook.gif)
 
 We richly support the following integrations:
