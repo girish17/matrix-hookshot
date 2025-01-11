@@ -10,6 +10,7 @@ import { URL } from "url";
 import { SetupWidget } from "../Widgets/SetupWidget";
 import { AdminRoom } from "../AdminRoom";
 import { GitLabRepoConnection } from "./GitlabRepo";
+import { OpenProjectConnection } from "./OpenProject";
 import { IConnection, IConnectionState, ProvisionConnectionOpts } from "./IConnection";
 import { ApiError, Logger } from "matrix-appservice-bridge";
 import { Intent } from "matrix-bot-sdk";
@@ -95,7 +96,7 @@ export class SetupConnection extends CommandConnection {
         await this.client.sendNotice(this.roomId, `Room configured to bridge ${connection.org}/${connection.repo}`);
     }
 
-    @botCommand("gitlab project", { help: "Create a connection for a GitHub project. (You must be logged in with GitLab to do this.)", requiredArgs: ["url"], includeUserId: true, category: GitLabRepoConnection.ServiceCategory})
+    @botCommand("gitlab project", { help: "Create a connection for a GitLab project. (You must be logged in with GitLab to do this.)", requiredArgs: ["url"], includeUserId: true, category: GitLabRepoConnection.ServiceCategory})
     public async onGitLabRepo(userId: string, url: string) {
         if (!this.config.gitlab) {
             throw new CommandError("not-configured", "The bridge is not configured to support GitLab.");
@@ -117,6 +118,32 @@ export class SetupConnection extends CommandConnection {
             throw new CommandError("Invalid GitLab url", "The GitLab project url you entered was not valid.");
         }
         const {connection, warning} = await GitLabRepoConnection.provisionConnection(this.roomId, userId, {path, instance: name}, this.provisionOpts);
+        this.pushConnections(connection);
+        await this.client.sendNotice(this.roomId, `Room configured to bridge ${connection.prettyPath}` + (warning ? `\n${warning.header}: ${warning.message}` : ""));
+    }
+
+    @botCommand("open project", { help: "Create a connection for an OpenProject project. (You must be logged in with OpenProject to do this.)", requiredArgs: ["url"], includeUserId: true, category: OpenProjectConnection.ServiceCategory})
+    public async onOpenProject(userId: string, url: string) {
+        if (!this.config.openproject) {
+            throw new CommandError("not-configured", "The bridge is not configured to support OpenProject.");
+        }
+
+        await this.checkUserPermissions(userId, OpenProjectConnection.ServiceCategory, OpenProjectConnection.CanonicalEventType);
+
+        const {name, instance} = this.config.openproject.getInstanceByProjectUrl(url) || {};
+        if (!instance || !name) {
+            throw new CommandError("not-configured", "No instance found that matches the provided URL.");
+        }
+
+        const client = await this.provisionOpts.tokenStore.getOpenProjectForUser(userId, instance.url);
+        if (!client) {
+            throw new CommandError("User not logged in", "You are not logged into this OpenProject instance. Start a DM with this bot and use the command `openproject personaltoken`.");
+        }
+        const path = url.slice(instance.url.length + 1);
+        if (!path) {
+            throw new CommandError("Invalid OpenProject url", "The OpenProject's project url you entered was not valid.");
+        }
+        const {connection, warning} = await OpenProjectConnection.provisionConnection(this.roomId, userId, {path, instance: name}, this.provisionOpts);
         this.pushConnections(connection);
         await this.client.sendNotice(this.roomId, `Room configured to bridge ${connection.prettyPath}` + (warning ? `\n${warning.header}: ${warning.message}` : ""));
     }

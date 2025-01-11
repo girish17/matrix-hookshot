@@ -134,6 +134,7 @@ export class AdminRoom extends AdminRoomCommandHandler {
         const enabledCategories = [
             this.config.github ? Category.Github : "",
             this.config.gitlab ? Category.Gitlab : "",
+            this.config.openproject ? Category.OpenProject : "",
             this.config.jira ? Category.Jira : "",
             this.canAdminConnections('github') ? Category.ConnectionManagement : '',
         ];

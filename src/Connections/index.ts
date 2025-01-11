@@ -7,6 +7,7 @@ export * from "./GithubRepo";
 export * from "./GithubUserSpace";
 export * from "./GitlabIssue";
 export * from "./GitlabRepo";
+export * from "./OpenProject"
 export * from "./IConnection";
 export * from "./JiraProject";
 export * from "./FigmaFileConnection";

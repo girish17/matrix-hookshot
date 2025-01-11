@@ -248,6 +248,75 @@ export class BridgeConfigGitLab {
     }
 }
 
+export interface OpenProjectInstance {
+    url: string;
+    // oauth: {
+    //     client_id: string;
+    //     client_secret: string;
+    //     redirect_uri: string;
+    // };
+}
+
+export interface BridgeConfigOpenProjectYAML {
+    webhook: {
+        publicUrl?: string;
+        secret: string;
+    },
+    instances: {[name: string]: OpenProjectInstance};
+    userIdPrefix: string;
+    commentDebounceMs?: number;
+}
+
+export class BridgeConfigOpenProject {
+    readonly instances: {[name: string]: OpenProjectInstance};
+    readonly webhook: {
+        publicUrl?: string;
+        secret: string;
+    };
+
+    @configKey("Prefix used when creating ghost users for OpenProject accounts.", true)
+    readonly userIdPrefix: string;
+
+    @configKey("Aggregate comments by waiting this many miliseconds before posting them to Matrix. Defaults to 5000 (5 seconds)", true)
+    readonly commentDebounceMs: number;
+
+    constructor(yaml: BridgeConfigOpenProjectYAML) {
+        this.instances = yaml.instances;
+        this.webhook = yaml.webhook;
+        this.userIdPrefix = yaml.userIdPrefix || "_openproject_";
+
+        for (const name in this.instances) {
+            const url = this.instances[name].url;
+            if (url.endsWith("/")) {
+                this.instances[name].url = url.slice(0, -1);
+            }
+        }
+
+        if (yaml.commentDebounceMs === undefined) {
+            this.commentDebounceMs = 5000;
+        } else {
+            this.commentDebounceMs = yaml.commentDebounceMs;
+        }
+    }
+
+    @hideKey()
+    public get publicConfig() {
+        return {
+            userIdPrefix: this.userIdPrefix,
+        }
+    }
+
+
+    public getInstanceByProjectUrl(url: string): {name: string, instance: OpenProjectInstance}|null {
+        for (const [name, instance] of Object.entries(this.instances)) {
+            if (url.startsWith(instance.url)) {
+                return {name, instance};
+            }
+        }
+        return null;
+    }
+}
+
 export interface BridgeConfigFeedsYAML {
     enabled: boolean;
     pollIntervalSeconds?: number;
@@ -469,6 +538,7 @@ export interface BridgeConfigRoot {
     generic?: BridgeGenericWebhooksConfigYAML;
     github?: BridgeConfigGitHubYAML;
     gitlab?: BridgeConfigGitLabYAML;
+    openproject?: BridgeConfigOpenProjectYAML;
     jira?: BridgeConfigJiraYAML;
     listeners?: BridgeConfigListener[];
     logging: BridgeConfigLogging;
@@ -509,6 +579,8 @@ export class BridgeConfig {
     public readonly github?: BridgeConfigGitHub;
     @configKey("Configure this to enable GitLab support", true)
     public readonly gitlab?: BridgeConfigGitLab;
+    @configKey("Configure this to enable OpenProject support", true)
+    public readonly openproject?: BridgeConfigOpenProject;
     @configKey("Configure this to enable Jira support. Only specify `url` if you are using a On Premise install (i.e. not atlassian.com)", true)
     public readonly jira?: BridgeConfigJira;
     @configKey(`Support for generic webhook events.
@@ -770,6 +842,9 @@ remove "useLegacySledStore" from your configuration file, and restart Hookshot.
         if (this.gitlab) {
             services.push("gitlab");
         }
+        if (this.openproject) {
+            services.push("openproject");
+        }
         if (this.jira) {
             services.push("jira");
         }
@@ -793,6 +868,9 @@ remove "useLegacySledStore" from your configuration file, and restart Hookshot.
                 break;
             case "gitlab":
                 config = this.gitlab?.publicConfig;
+                break;
+            case "openproject":
+                config = this.openproject?.publicConfig;
                 break;
             case "genericOutbound":
             case "jira":

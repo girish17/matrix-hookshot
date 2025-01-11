@@ -8,6 +8,7 @@ export enum Category {
     ConnectionManagement = "Connection Management",
     Github               = "Github",
     Gitlab               = "Gitlab",
+    OpenProject          = "OpenProject",
     Jira                 = "Jira",
 }
 
@@ -22,6 +23,13 @@ export interface AdminAccountData {
         };
     };
     gitlab?: {
+        [instanceUrl: string]: {
+            notifications: {
+                enabled: boolean;
+            }
+        }
+    };
+    openproject?: {
         [instanceUrl: string]: {
             notifications: {
                 enabled: boolean;
