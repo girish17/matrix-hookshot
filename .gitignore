@@ -13,6 +13,10 @@ public/
 # Generated during build
 /src/libRs.d.ts
 
+# Generated during test run
+/spec-lib
+/hookshot-int-*
+
 book
 *.cer
 *.pem
@@ -24,3 +28,10 @@ coverage
 
 # Log files
 nohup.out
+
+# Devenv
+.devenv*
+devenv.local.nix
+
+# direnv
+.direnv

@@ -14,7 +14,6 @@ export enum Category {
 
 
 export interface AdminAccountData {
-    // eslint-disable-next-line camelcase
     admin_user: string;
     github?: {
         notifications?: {
