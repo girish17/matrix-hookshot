@@ -6,6 +6,7 @@ import { IBridgeStorageProvider, MAX_FEED_ITEMS } from "./StorageProvider";
 import { IFilterInfo, IStorageProvider } from "matrix-bot-sdk";
 import { ProvisionSession } from "matrix-appservice-bridge";
 import { SerializedGitlabDiscussionThreads } from "../Gitlab/Types";
+import { SerializedOpenProjectDiscussionThreads } from "../OpenProject/Types";
 import { BridgeConfigCache } from "../config/sections";
 
 const BOT_SYNC_TOKEN_KEY = "bot.sync_token.";
@@ -217,6 +218,16 @@ export class RedisStorageProvider extends RedisStorageContextualProvider impleme
     }
 
     public async setGitlabDiscussionThreads(connectionId: string, value: SerializedGitlabDiscussionThreads): Promise<void> {
+        const key = `${GL_DISCUSSIONTHREADS_KEY}:${connectionId}`;
+        await this.redis.set(key, JSON.stringify(value));
+    }
+
+    public async getOpenProjectDiscussionThreads(connectionId: string): Promise<SerializedOpenProjectDiscussionThreads> {
+        const key = `${GL_DISCUSSIONTHREADS_KEY}:${connectionId}`;
+        return JSON.parse(await this.redis.get(key) ?? '[]');
+    }
+
+    public async setOpenProjectDiscussionThreads(connectionId: string, value: SerializedOpenProjectDiscussionThreads): Promise<void> {
         const key = `${GL_DISCUSSIONTHREADS_KEY}:${connectionId}`;
         await this.redis.set(key, JSON.stringify(value));
     }

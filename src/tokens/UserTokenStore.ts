@@ -1,5 +1,6 @@
 import { GithubInstance } from "../github/GithubInstance";
 import { GitLabClient } from "../Gitlab/Client";
+import { OpenProjectClient } from "../OpenProject/Client";
 import { Intent } from "matrix-bot-sdk";
 import { promises as fs } from "fs";
 import { Logger } from "matrix-appservice-bridge";
@@ -26,8 +27,8 @@ const LEGACY_ACCOUNT_DATA_TYPE = "uk.half-shot.matrix-github.password-store:";
 const LEGACY_ACCOUNT_DATA_GITLAB_TYPE = "uk.half-shot.matrix-github.gitlab.password-store:";
 
 const log = new Logger("UserTokenStore");
-export type TokenType = "github"|"gitlab"|"jira"|"generic";
-export const AllowedTokenTypes = ["github", "gitlab", "jira", "generic"];
+export type TokenType = "github"|"gitlab"|"openproject"|"jira"|"generic";
+export const AllowedTokenTypes = ["github", "gitlab", "openproject", "jira", "generic"];
 
 interface StoredTokenData {
     encrypted: string|string[];
@@ -259,6 +260,14 @@ export class UserTokenStore extends TypedEmitter<Emitter> {
             return null;
         }
         return new GitLabClient(instanceUrl, senderToken);
+    }
+
+    public async getOpenProjectForUser(userId: string, instanceUrl: string) {
+        const senderToken = await this.getUserToken("openproject", userId, instanceUrl);
+        if (!senderToken) {
+            return null;
+        }
+        return new OpenProjectClient(instanceUrl, senderToken);
     }
 
     public async getJiraForUser(userId: string, instanceUrl?: string): Promise<JiraClient|null> {

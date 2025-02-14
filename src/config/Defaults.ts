@@ -91,6 +91,18 @@ export const DefaultConfigRoot: BridgeConfigRoot = {
         },
         userIdPrefix: "_gitlab_",
     },
+    openproject: {
+        instances: {
+            "openproject.org": {
+                url: "https://community.openproject.org",
+            }
+        },
+        webhook: {
+            secret: "secrettoken",
+            publicUrl: `${hookshotWebhooksUrl}/hookshot/`,
+        },
+        userIdPrefix: "_openproject_",
+    },
     jira: {
         webhook: {
             secret: 'secrettoken'

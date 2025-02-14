@@ -26,6 +26,9 @@ book
 coverage
 .nyc_output
 
+# Log files
+nohup.out
+
 # Devenv
 .devenv*
 devenv.local.nix

@@ -4,6 +4,7 @@ import { IssuesGetResponseData } from "../github/Types";
 import { ProvisionSession } from "matrix-appservice-bridge";
 import QuickLRU from "@alloc/quick-lru";
 import { SerializedGitlabDiscussionThreads } from "../Gitlab/Types";
+import { SerializedOpenProjectDiscussionThreads } from "../OpenProject/Types";
 
 export class MemoryStorageProvider extends MSP implements IBridgeStorageProvider {
     private issues: Map<string, IssuesGetResponseData> = new Map();
@@ -13,6 +14,7 @@ export class MemoryStorageProvider extends MSP implements IBridgeStorageProvider
     private widgetSessions: Map<string, ProvisionSession> = new Map();
     private storedFiles = new QuickLRU<string, string>({ maxSize: 128 });
     private gitlabDiscussionThreads = new Map<string, SerializedGitlabDiscussionThreads>();
+    private openprojectDiscussionThreads = new Map<string, SerializedOpenProjectDiscussionThreads>();
     private feedGuids = new Map<string, Array<string>>();
     private houndActivityIds = new Map<string, Array<string>>();
     private houndActivityIdToEvent = new Map<string, string>();
@@ -110,6 +112,14 @@ export class MemoryStorageProvider extends MSP implements IBridgeStorageProvider
 
     public async setGitlabDiscussionThreads(connectionId: string, value: SerializedGitlabDiscussionThreads): Promise<void> {
         this.gitlabDiscussionThreads.set(connectionId, value);
+    }
+
+    public async getOpenProjectDiscussionThreads(connectionId: string): Promise<SerializedOpenProjectDiscussionThreads> {
+        return this.openprojectDiscussionThreads.get(connectionId) ?? [];
+    }
+
+    public async setOpenProjectDiscussionThreads(connectionId: string, value: SerializedOpenProjectDiscussionThreads): Promise<void> {
+        this.openprojectDiscussionThreads.set(connectionId, value);
     }
 
     async storeHoundActivity(challengeId: string, ...activityIds: string[]): Promise<void> {
