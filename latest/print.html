@@ -151,8 +151,9 @@
                         <h1 id="img-srclogopng-altlogo--matrix-hookshot"><a class="header" href="#img-srclogopng-altlogo--matrix-hookshot"><img src="logo.png" alt="logo" /> Matrix Hookshot</a></h1>
 <p><a href="https://matrix.to/#/#hookshot:half-shot.uk"><img src="https://img.shields.io/matrix/hookshot:half-shot.uk.svg?server_fqdn=chaotic.half-shot.uk&amp;label=%23hookshot:half-shot.uk&amp;logo=matrix" alt="#hookshot:half-shot.uk" /></a>
 <a href="https://hub.docker.com/r/halfshot/matrix-hookshot"><img src="https://img.shields.io/docker/v/halfshot/matrix-hookshot?sort=semver" alt="Docker Image Version (latest by date)" /></a></p>
-<p><img src="screenshot.png" alt="screenshot" /></p>
 <p>A Matrix bot for connecting to external services like GitHub, GitLab, JIRA, and more.</p>
+<p>GitHub issues demo
+<img src="githubIssuesDemo.gif" alt="githubIssuesDemo" /></p>
 <ul>
 <li>Several services are supported out of the box.</li>
 <li><a href="https://matrix-org.github.io/matrix-hookshot/latest/setup/webhooks.html">Webhooks</a> let you connect all kinds of services, with the ability to write rich templates using JavaScript.</li>
@@ -160,6 +161,8 @@
 <li>End-to-Bridge encryption allows bots to be used in encrypted Matrix rooms.</li>
 <li><a href="https://matrix-org.github.io/matrix-hookshot/latest/advanced/widgets.html">Powerful widgets</a> let you configure Hookshot from a room or the Element Extensions Store.</li>
 </ul>
+<p>OpenProject webhooks demo with Hookshot
+<img src="OpenProjectGenericWebhook.gif" alt="OpenProjectGenericWebhook" /></p>
 <p>We richly support the following integrations:</p>
 <ul>
 <li><a href="https://matrix-org.github.io/matrix-hookshot/latest/setup/challengehound.html">Challenge Hound</a></li>
@@ -1491,7 +1494,7 @@ the events marked as default below will be enabled. Otherwise, this is ignored.<
 <h2 id="configuration-7"><a class="header" href="#configuration-7">Configuration</a></h2>
 <p>This connection supports a few options which can be defined in the room state:</p>
 <table><thead><tr><th>Option</th><th>Description</th><th>Allowed values</th><th>Default</th></tr></thead><tbody>
-<tr><td>commandPrefix</td><td>Choose the prefix to use when sending commands to the bot</td><td>A string, ideally starts with &quot;!&quot;</td><td><code>!gh</code></td></tr>
+<tr><td>commandPrefix</td><td>Choose the prefix to use when sending commands to the bot</td><td>A string, ideally starts with &quot;!&quot;</td><td><code>!gl</code></td></tr>
 <tr><td>enableHooks <sup class="footnote-reference"><a href="#1">1</a></sup></td><td>Enable notifications for some event types</td><td>Array of: <a href="usage/room_configuration/gitlab_project.html#supported-event-types">Supported event types</a></td><td>If not defined, defaults are mentioned below</td></tr>
 <tr><td>excludingLabels</td><td>Never notify on issues matching these label names</td><td>Array of: String matching a label name</td><td><em>empty</em></td></tr>
 <tr><td>ignoreHooks <sup class="footnote-reference"><a href="#1">1</a></sup></td><td><strong>deprecated</strong> Choose to exclude notifications for some event types</td><td>Array of: <a href="usage/room_configuration/gitlab_project.html#supported-event-types">Supported event types</a></td><td><em>empty</em></td></tr>
