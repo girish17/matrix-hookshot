@@ -288,13 +288,19 @@ export class BridgeConfigGitLab {
     }
 }
 
+export interface BridgeConfigOpenProjectOAuth {
+    client_id: string;
+    client_secret: string;
+    redirect_uri: string;
+}
+
 export interface OpenProjectInstance {
     url: string;
-    // oauth: {
-    //     client_id: string;
-    //     client_secret: string;
-    //     redirect_uri: string;
-    // };
+    oauth: {
+        client_id: string;
+        client_secret: string;
+        redirect_uri: string;
+    };
 }
 
 export interface BridgeConfigOpenProjectYAML {
@@ -307,7 +313,7 @@ export interface BridgeConfigOpenProjectYAML {
     commentDebounceMs?: number;
 }
 
-export class BridgeConfigOpenProject {
+export class BridgeConfigOpenProject implements BridgeConfigOpenProjectYAML{
     readonly instances: {[name: string]: OpenProjectInstance};
     readonly webhook: {
         publicUrl?: string;
@@ -316,6 +322,9 @@ export class BridgeConfigOpenProject {
 
     @configKey("Prefix used when creating ghost users for OpenProject accounts.", true)
     readonly userIdPrefix: string;
+
+    @configKey("OAuth settings for connecting users to JIRA. See documentation for more information", true)
+    readonly oauth?: BridgeConfigOpenProjectOAuth;
 
     @configKey("Aggregate comments by waiting this many miliseconds before posting them to Matrix. Defaults to 5000 (5 seconds)", true)
     readonly commentDebounceMs: number;
@@ -669,6 +678,7 @@ export class BridgeConfig {
         }
         this.gitlab = configData.gitlab && new BridgeConfigGitLab(configData.gitlab);
         this.figma = configData.figma;
+        this.openproject = configData.openproject && new BridgeConfigOpenProject(configData.openproject);
         this.jira = configData.jira && new BridgeConfigJira(configData.jira);
         this.openproject = configData.openproject && new BridgeConfigOpenProject(configData.openproject);
         this.generic = configData.generic && new BridgeConfigGenericWebhooks(configData.generic);
@@ -734,8 +744,8 @@ export class BridgeConfig {
             log.warn(`You have not configured any permissions for the bridge, which by default means all users on ${this.bridge.domain} have admin levels of control. Please adjust your config.`);
         }
 
-        if (!this.github && !this.gitlab && !this.jira && !this.generic && !this.figma && !this.feeds) {
-            throw Error("Config is not valid: At least one of GitHub, GitLab, JIRA, Figma, feeds or generic hooks must be configured");
+        if (!this.github && !this.gitlab && !this.jira && !this.openproject && !this.generic && !this.figma && !this.feeds) {
+            throw Error("Config is not valid: At least one of GitHub, GitLab, JIRA, OpenProject, Figma, feeds or generic hooks must be configured");
         }
 
         if ('goNebMigrator' in configData) {

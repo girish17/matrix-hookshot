@@ -426,7 +426,7 @@ export class OpenProjectConnection extends CommandConnection<OpenProjectConnecti
             OpenProjectConnection.botCommands,
             OpenProjectConnection.helpMessage,
             ["OpenProject"],
-            "!gl",
+            "!op",
             "OpenProject",
         )
         this.grantChecker = new OpenProjectGrantChecker(as, config, tokenStore);

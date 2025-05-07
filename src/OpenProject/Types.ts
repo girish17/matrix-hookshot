@@ -231,3 +231,11 @@ export interface SimpleProject {
     path: string;
     path_with_namespace: string;
 }
+
+export interface OpenProjectOAuthResult {
+    state?: string;
+    access_token: string;
+    refresh_token?: string;
+    expires_in?: number;
+    scope: string;
+}

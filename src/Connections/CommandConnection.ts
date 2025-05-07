@@ -46,7 +46,7 @@ export abstract class CommandConnection<StateType extends IConnectionState = ICo
             ev.sender, ev.content.body, this.botCommands, this,checkPermission,
             this.serviceName, this.commandPrefix
         );
-        if (commandResult.handled !== true) {
+        if (!commandResult.handled) {
             // Not for us.
             return false;
         }

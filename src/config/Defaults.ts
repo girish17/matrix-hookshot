@@ -101,6 +101,11 @@ export const DefaultConfigRoot: BridgeConfigRoot = {
             secret: "secrettoken",
             publicUrl: `${hookshotWebhooksUrl}/hookshot/`,
         },
+        oauth: {
+            client_id: "foo",
+            client_secret: "bar",
+            redirect_uri: `${hookshotWebhooksUrl}/oauth/`,
+        },
         userIdPrefix: "_openproject_",
     },
     jira: {

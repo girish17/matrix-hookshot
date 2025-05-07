@@ -6,7 +6,7 @@ import { promises as fs } from "fs";
 import { Logger } from "matrix-appservice-bridge";
 import { isJiraCloudInstance, JiraClient } from "../jira/Client";
 import { JiraStoredToken } from "../jira/Types";
-import { BridgeConfig, BridgeConfigJira, BridgeConfigJiraOnPremOAuth, BridgePermissionLevel } from "../config/Config";
+import { BridgeConfig, BridgeConfigJira, BridgeConfigJiraOnPremOAuth, BridgePermissionLevel, BridgeConfigOpenProject } from "../config/Config";
 import { randomUUID } from 'node:crypto';
 import { GitHubOAuthToken } from "../github/Types";
 import { ApiError, ErrCode } from "../api";
@@ -15,6 +15,7 @@ import { JiraCloudOAuth } from "../jira/oauth/CloudOAuth";
 import { JiraOnPremOAuth } from "../jira/oauth/OnPremOAuth";
 import { JiraOnPremClient } from "../jira/client/OnPremClient";
 import { JiraCloudClient } from "../jira/client/CloudClient";
+import { OpenProjectOAuth} from "../OpenProject/OAuth";
 import { TokenError, TokenErrorCode } from "../errors";
 import { TypedEmitter } from "tiny-typed-emitter";
 import { hashId, TokenEncryption, stringToAlgo } from "../libRs"; 
@@ -70,6 +71,7 @@ export class UserTokenStore extends TypedEmitter<Emitter> {
     private oauthSessionStore: Map<string, {userId: string, timeout: NodeJS.Timeout}> = new Map();
     private userTokens: Map<string, string>;
     public readonly jiraOAuth?: JiraOAuth;
+    public readonly openprojectOAuth?: OpenProjectOAuth;
     private tokenEncryption: TokenEncryption;
     private readonly keyId: string;
     constructor(key: Buffer, private readonly intent: Intent, private readonly config: BridgeConfig) {
@@ -85,6 +87,8 @@ export class UserTokenStore extends TypedEmitter<Emitter> {
             } else {
                 throw Error('jira oauth misconfigured');
             }
+        } else if (config.jira?.oauth) {
+
         }
     }
 

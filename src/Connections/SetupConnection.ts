@@ -123,7 +123,7 @@ export class SetupConnection extends CommandConnection {
         await this.client.sendNotice(this.roomId, `Room configured to bridge ${connection.prettyPath}` + (warning ? `\n${warning.header}: ${warning.message}` : ""));
     }
 
-    @botCommand("open project", { help: "Create a connection for an OpenProject project. (You must be logged in with OpenProject to do this.)", requiredArgs: ["url"], includeUserId: true, category: OpenProjectConnection.ServiceCategory})
+    @botCommand("openproject project", { help: "Create a connection for an OpenProject project. (You must be logged in with OpenProject to do this.)", requiredArgs: ["url"], includeUserId: true, category: OpenProjectConnection.ServiceCategory})
     public async onOpenProject(userId: string, url: string) {
         if (!this.config.openproject) {
             throw new CommandError("not-configured", "The bridge is not configured to support OpenProject.");
